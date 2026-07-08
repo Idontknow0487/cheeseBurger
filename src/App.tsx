@@ -1,13 +1,18 @@
 import './App.css'
+import { filterFrames } from './filterFrames'
+import type { FilterQuery } from './filterFrames'
 import type { Frame } from './types'
+
 
 function App() {
   const title = "Cheese Burger"
+
+  //mock data, time is going to have an option to be read from EXIF or user input.
   const frames: Frame[] = [
     {
       id: 1,
       author: "Ethan",
-      date: 20240601,
+      timeTaken: "2024-06-01T08:15:30",
       location: "New York",
       round: 1,
       season: "Summer",
@@ -16,7 +21,7 @@ function App() {
     {
       id: 2,
       author: "Ethan",
-      date: 20240605,
+      timeTaken: "2024-06-05T14:22:10",
       location: "Los Angeles",
       round: 2,
       season: "Summer",
@@ -25,7 +30,7 @@ function App() {
     {
       id: 3,
       author: "Ethan",
-      date: 20240610,
+      timeTaken: "2024-06-10T19:05:45",
       location: "San Diego",
       round: 3,
       season: "Summer",
@@ -34,7 +39,7 @@ function App() {
     {
       id: 4,
       author: "David",
-      date: 20240602,
+      timeTaken: "2024-06-02T09:40:05",
       location: "New York",
       round: 1,
       season: "Summer",
@@ -43,7 +48,7 @@ function App() {
     {
       id: 5,
       author: "David",
-      date: 20240607,
+      timeTaken: "2024-06-07T17:18:55",
       location: "Seattle",
       round: 2,
       season: "Summer",
@@ -52,7 +57,7 @@ function App() {
     {
       id: 6,
       author: "Mia",
-      date: 20240603,
+      timeTaken: "2024-06-03T12:00:00",
       location: "Chicago",
       round: 1,
       season: "Summer",
@@ -61,7 +66,7 @@ function App() {
     {
       id: 7,
       author: "Mia",
-      date: 20240608,
+      timeTaken: "2024-06-08T20:30:15",
       location: "Chicago",
       round: 2,
       season: "Summer",
@@ -70,7 +75,7 @@ function App() {
     {
       id: 8,
       author: "Leo",
-      date: 20241202,
+      timeTaken: "2024-12-02T07:55:20",
       location: "Boston",
       round: 1,
       season: "Winter",
@@ -79,7 +84,7 @@ function App() {
     {
       id: 9,
       author: "Leo",
-      date: 20241206,
+      timeTaken: "2024-12-06T16:42:08",
       location: "Montreal",
       round: 2,
       season: "Winter",
@@ -88,7 +93,7 @@ function App() {
     {
       id: 10,
       author: "Ava",
-      date: 20241203,
+      timeTaken: "2024-12-03T11:11:11",
       location: "Toronto",
       round: 1,
       season: "Winter",
@@ -99,17 +104,23 @@ function App() {
   return <>
     <h1>{title}</h1>
     <p>Welcome to the Cheese Burger app!</p>
-    <Grid frames={frames} />
+    <h2>Ethan in Summer</h2>
+    <Roll frames={frames} query={{ author: 'Ethan', season: 'Summer' }} />
+    <h1>________________________________</h1>
+    <h2>Winter round 1</h2>
+    <Roll frames={frames} query={{ season: 'Winter', round: 1 }} />
   </>
 }
 
 //reads the frame data
+//@param frame: Frame - the frame data to display
+//@return a card with the frame data
 function FrameCard({ frame }: { frame: Frame }) {
   return (
     <div className="card">
       <h2>Frame {frame.id}</h2>
       <p>Author: {frame.author}</p>
-      <p>Date: {frame.date}</p>
+      <p>Time Taken: {frame.timeTaken}</p>
       <p>Location: {frame.location}</p>
       <p>Round: {frame.round}</p>
       <p>Season: {frame.season}</p>
@@ -119,6 +130,8 @@ function FrameCard({ frame }: { frame: Frame }) {
 }
 
 //displays the frame data in a grid
+//@param frames: Frame[] - the frame data to display
+//@return a grid with the frame data
 function Grid({ frames }: { frames: Frame[] }) {
   return (
     <div className="grid">
@@ -126,6 +139,19 @@ function Grid({ frames }: { frames: Frame[] }) {
         <FrameCard key={frame.id} frame={frame} />
       ))}
     </div>
+  )
+}
+//filters the frames by author and displays them in a grid
+//@param frames: Frame[] - the frame data to filter
+//@param query: filterQuery - the filters to apply
+//@return a grid with the filtered frame data
+function Roll({ frames, query }: { frames: Frame[], query: FilterQuery }) {
+  const filteredFrames = filterFrames(frames, query)
+
+  return filteredFrames.length > 0 ? (
+    <Grid frames={filteredFrames} />
+  ) : (
+    <p>No frames found for this filter.</p>
   )
 }
 export default App
