@@ -1,4 +1,4 @@
-type frame = {
+export type Frame = {
     id: number;
     author: string;
     date: number;
