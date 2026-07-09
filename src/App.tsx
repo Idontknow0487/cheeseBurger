@@ -1,4 +1,5 @@
 import './App.css'
+import { useState } from 'react'
 import { filterFrames } from './filterFrames'
 import type { FilterQuery } from './filterFrames'
 import type { Frame } from './types'
@@ -6,6 +7,8 @@ import type { Frame } from './types'
 
 function App() {
   const title = "Cheese Burger"
+  const [currentRound, setCurrentRound] = useState(1)
+  const currentUser = "Ethan"
 
   //mock data, time is going to have an option to be read from EXIF or user input.
   const frames: Frame[] = [
@@ -104,19 +107,23 @@ function App() {
   return <>
     <h1>{title}</h1>
     <p>Welcome to the Cheese Burger app!</p>
+    <p>Current round: {currentRound}</p>
+    <button onClick={() => setCurrentRound(currentRound + 1)}>Advance the season</button>
     <h2>Ethan in Summer</h2>
-    <Roll frames={frames} query={{ author: 'Ethan', season: 'Summer' }} />
+    <Roll frames={frames} query={{ author: 'Ethan', season: 'Summer' }} currentRound={currentRound} currentUser={currentUser} />
     <h1>________________________________</h1>
     <h2>Winter round 1</h2>
-    <Roll frames={frames} query={{ season: 'Winter', round: 1 }} />
+    <Roll frames={frames} query={{ season: 'Winter', round: 1 }} currentRound={currentRound} currentUser={currentUser} />
   </>
 }
 
 //reads the frame data
 //@param frame: Frame - the frame data to display
 //@return a card with the frame data
-function FrameCard({ frame }: { frame: Frame }) {
-  return (
+function FrameCard({ frame, currentRound, currentUser }: { frame: Frame, currentRound: number, currentUser: string }) {
+  const canSee = frame.round < currentRound || frame.author === currentUser
+
+  return canSee ? (
     <div className="card">
       <h2>Frame {frame.id}</h2>
       <p>Author: {frame.author}</p>
@@ -126,17 +133,22 @@ function FrameCard({ frame }: { frame: Frame }) {
       <p>Season: {frame.season}</p>
       <p>Award: {frame.award || "No award"}</p>
     </div>
+  ) : (
+    <div className="card">
+      <h2>Frame {frame.id}</h2>
+      <p>developing…</p>
+    </div>
   )
 }
 
 //displays the frame data in a grid
 //@param frames: Frame[] - the frame data to display
 //@return a grid with the frame data
-function Grid({ frames }: { frames: Frame[] }) {
+function Grid({ frames, currentRound, currentUser }: { frames: Frame[], currentRound: number, currentUser: string }) {
   return (
     <div className="grid">
       {frames.map(frame => (
-        <FrameCard key={frame.id} frame={frame} />
+        <FrameCard key={frame.id} frame={frame} currentRound={currentRound} currentUser={currentUser} />
       ))}
     </div>
   )
@@ -145,11 +157,11 @@ function Grid({ frames }: { frames: Frame[] }) {
 //@param frames: Frame[] - the frame data to filter
 //@param query: filterQuery - the filters to apply
 //@return a grid with the filtered frame data
-function Roll({ frames, query }: { frames: Frame[], query: FilterQuery }) {
+function Roll({ frames, query, currentRound, currentUser }: { frames: Frame[], query: FilterQuery, currentRound: number, currentUser: string }) {
   const filteredFrames = filterFrames(frames, query)
 
   return filteredFrames.length > 0 ? (
-    <Grid frames={filteredFrames} />
+    <Grid frames={filteredFrames} currentRound={currentRound} currentUser={currentUser} />
   ) : (
     <p>No frames found for this filter.</p>
   )

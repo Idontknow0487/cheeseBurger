@@ -28,3 +28,14 @@ export function filterFrames(frames: Frame[], query: FilterQuery) {
         return true;
     });
 }
+
+export type RollVisibilityQuery = {
+    currentUser: string;
+    currentRound: number;
+}
+
+export function getVisibleFrames(frames: Frame[], query: RollVisibilityQuery) {
+    return frames.filter(frame => {
+        return frame.author === query.currentUser || frame.round === query.currentRound;
+    });
+}
