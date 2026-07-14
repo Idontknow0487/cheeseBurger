@@ -4,8 +4,7 @@ export type FilterQuery = {
     author?: string;
     location?: string;
     round?: number;
-    season?: string;
-    award?: string;
+    seasonId?: number;
 }
 
 export function filterFrames(frames: Frame[], query: FilterQuery) {
@@ -19,10 +18,7 @@ export function filterFrames(frames: Frame[], query: FilterQuery) {
         if (query.round !== undefined && frame.round !== query.round) {
             return false;
         }
-        if (query.season && frame.season !== query.season) {
-            return false;
-        }
-        if (query.award && frame.award !== query.award) {
+        if (query.seasonId !== undefined && frame.seasonId !== query.seasonId) {
             return false;
         }
         return true;
@@ -32,10 +28,4 @@ export function filterFrames(frames: Frame[], query: FilterQuery) {
 export type RollVisibilityQuery = {
     currentUser: string;
     currentRound: number;
-}
-
-export function getVisibleFrames(frames: Frame[], query: RollVisibilityQuery) {
-    return frames.filter(frame => {
-        return frame.author === query.currentUser || frame.round === query.currentRound;
-    });
 }
