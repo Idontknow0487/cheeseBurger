@@ -195,4 +195,5 @@ function Roll({ frames, query, seasons, awards, currentUser }: { frames: Frame[]
     <p>No frames found for this filter.</p>
   )
 }
+
 export default App
