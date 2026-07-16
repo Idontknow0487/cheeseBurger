@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 projectSummary.md
+mockup.jsx
 
 # Editor directories and files
 .vscode/*
