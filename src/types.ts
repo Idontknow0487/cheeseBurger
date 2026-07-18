@@ -15,6 +15,10 @@ export type Season = {
     status: "voting" |"planned" | "active" | "complete";
     currentRound: number;
     roundCount: number;
+    // ISO dates. Two-week window per season; time-left is derived (endsAt - now)
+    // at render, never stored. A backend will set these + status later.
+    startsAt: string;
+    endsAt: string;
 };
 
 // The fixed set of awards. Values are stable strings; the union type is derived

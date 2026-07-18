@@ -3,9 +3,11 @@
 .app {
   --bg:#0b0d10; --line:#23272e; --ink:#e8e6e1; --ink-dim:#8a8f96;
   --amber:#e0a458; --film:#08090b;
-  min-height:100vh; margin:0 auto; max-width:840px;
+  min-height:100vh; margin:0 auto; width:100%; max-width:1152px;
   background:radial-gradient(1200px 600px at 70% -10%, #16191f, var(--bg) 60%);
-  color:var(--ink); font-family:'Inter',system-ui,sans-serif; padding:0 20px 120px;
+  color:var(--ink); font-family:'Inter',system-ui,sans-serif;
+  /* fluid side padding: 16px on phones → up to 48px on wide screens */
+  padding:0 clamp(16px, 4vw, 48px) 120px;
 }
 
 /* navbar */
@@ -100,5 +102,23 @@
 .fab { position:fixed; right:24px; bottom:28px; width:58px; height:58px; border-radius:50%; background:var(--amber); color:var(--film); border:none; font-size:28px; cursor:pointer; box-shadow:0 10px 30px rgba(224,164,88,.35); transition:transform .2s; z-index:40; }
 .fab:hover { transform:scale(1.06); }
 .fab:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+
+/* ── mobile: same look, tighter spacing + a stacked nav that never crowds ── */
+@media (max-width: 600px) {
+  /* brand on its own line, links below — no squeezing three pills next to it */
+  .nav { flex-direction:column; align-items:flex-start; gap:12px; padding:16px 0 18px; }
+  .nav__links { align-self:stretch; }
+  .nav__link { padding:6px 10px; font-size:13px; }
+
+  .head { margin:8px 0 26px; }
+  .head__theme { font-size:38px; }
+
+  /* awards & past cards scale down so two-plus fit without a wall of scroll */
+  .award, .award__photo { width:150px; }
+  .award__photo { height:150px; }
+  .pastgrid { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+
+  .fab { right:16px; bottom:20px; width:52px; height:52px; font-size:26px; }
+}
 
 @media (prefers-reduced-motion: reduce) { .frame--dev, .award, .backdrop { animation:none; } }
