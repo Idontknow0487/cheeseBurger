@@ -1,5 +1,7 @@
 import './App.css'
-import { useState } from 'react'
+import exifr from 'exifr'
+import heicPlaceholder from './assets/IMG_5065-2.jpg'
+import { useState, useRef } from 'react'
 import { filterFrames } from './filterFrames'
 import type { Frame, Season, Award } from './types'
 import { AWARDS } from './types'
@@ -65,6 +67,8 @@ function App() {
     { id: 2, theme: "Winter", status: "complete", currentRound: 3, roundCount: 2, startsAt: "2025-12-05", endsAt: "2025-12-19" },
   ])
 
+
+  //MOCK BTW
   // Flat list of frames — the only real stored objects. Rolls/rounds are derived
   // by filtering this list. Some rounds carry more than one frame on purpose.
   const frames: Frame[] = [
@@ -293,24 +297,75 @@ function FrameDetail({ frame, onClose }: { frame: Frame | null, onClose: () => v
 // ── Add-frame modal. Mock only: "Choose photo" and the fields are non-functional
 // stubs until the backend + real uploads (URL.createObjectURL preview) land.
 function AddFrameModal({ onClose }: { onClose: () => void }) {
+  const [location, setLocation] = useState("")
+  const [time, setTime] = useState("")
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  // error states for file uploads.
+  const [preview, setPreview] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const [isHeic, setIsHeic] = useState(false)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [fileSize, setFileSize] = useState<string | null>(null)
   const fieldInput: React.CSSProperties = {
     background: "transparent", border: "none", color: "inherit",
     font: "inherit", textAlign: "right", outline: "none",
   }
+  // ── File reading helper method. Returns Exif data for the selected image
+  // file. Used in the AddFrameModal to prefill the time/location fields.
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const okType = file.type === "image/jpeg" || file.type === "image/heic"
+
+    const okSize = file.size <= 20 * 1024 * 1024
+    if (!okType || !okSize) {
+      setPreview(null)
+      setIsHeic(false)
+      setFileName(null)
+      setFileSize(null)
+      setError(!okType ? "JPEG or HEIC only" : "File too large (max 20MB)")
+      return
+  }
+  setError(null)
+  setFileName(file.name)
+  setFileSize((file.size / 1024 / 1024).toFixed(1) + " MB")
+  if (file.type === "image/heic") {
+    // Chrome can't render HEIC so we just show a placeholder jpeg for now,
+    // real implementation will have a round trip where the heic is sent backend
+    // to be converted to a webP, stored, and sent back for preview.
+    setIsHeic(true)
+  }
+  else {
+    setIsHeic(false)
+    setPreview(URL.createObjectURL(file))
+  }
+}
+  
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="detail" onClick={e => e.stopPropagation()}>
         <div className="detail__body" style={{ flex: "1 1 100%" }}>
-          
           <div className="detail__author">Add a frame</div>
-          <button className="detail__close" style={{ marginTop: 0 }}>Choose photo</button>
 
-
+          <label className="detail__row"><span>Photo</span></label>
+          <input ref={inputRef} type="file" accept="image/jpeg,image/heic" style={{ display: "none" }} onChange={handleFile} />
+          {isHeic
+            ? <img src={heicPlaceholder} alt="" style={{ maxWidth: "100%", borderRadius: 4, opacity: 0.85 }} />
+            : preview && <img src={preview} alt="" style={{ maxWidth: "100%", borderRadius: 4 }} />}
+          {fileName && (
+            <div className="detail__row">
+              <span>{isHeic ? "HEIC (placeholder)" : "File"}</span>{fileName} · {fileSize}
+            </div>
+          )}
+          {error && <p style={{ color: "#e0a458" }}>{error}</p>}
+          <button className="detail__close" style={{ marginTop: 0 }} onClick={() => inputRef.current?.click()}>Choose photo</button>
+          
           <label className="detail__row"><span>Location</span>
-            <input type="text" placeholder="Where was this?" style={fieldInput} />
+            <input type="text" placeholder="Where was this?" value={location} onChange={(e) => setLocation(e.target.value)} style={fieldInput} />
           </label>
           <label className="detail__row"><span>Time</span>
-            <input type="datetime-local" style={{ ...fieldInput, textAlign: "left" }} />
+            <input type="datetime-local" value={time} onChange={(e) => setTime(e.target.value)} style={{ ...fieldInput, textAlign: "left" }} />
           </label>
           <button className="detail__close" onClick={onClose}>Cancel</button>
         </div>
@@ -318,6 +373,7 @@ function AddFrameModal({ onClose }: { onClose: () => void }) {
     </div>
   )
 }
+
 
 // ── Season award row. Each award looks up its frame by frameId for the photo
 // placeholder and caption. Additive-only — no ranking, no score.
@@ -368,7 +424,7 @@ function PastGrid({ seasons, frames, onOpen }: {
   )
 }
 
-// ── Map is a deliberate stub — its own future phase + a mapping library.
+// ── we gna do dis latr 
 function MapStub() {
   return (
     <div className="stub">
