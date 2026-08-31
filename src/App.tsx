@@ -3,7 +3,7 @@ import exifr from 'exifr'
 import heicPlaceholder from './assets/IMG_5065-2.jpg'
 import { useState, useRef } from 'react'
 import { filterFrames } from './filterFrames'
-import type { Frame, Season, Award } from './types'
+  import type { Frame, Season, Award, TimeSource } from './types'
 import { AWARDS } from './types'
 
 type Page = "active" | "map" | "past"
@@ -55,12 +55,16 @@ function timeLeft(endsAt: string, now: Date): string {
   return "Ended"
 }
 
+//converts a "date" taken from exifr to a ISO string
+function toDatetimeLocalString(date: Date): string {
+   const pad = (n: number) => n.toString().padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 function App() {
   const currentUser = "Ethan"
-  const now = new Date() // system clock; drives each active season's time-left
+  const now = new Date()
 
-  // Statuses/dates are hardcoded for this alpha; a backend decides them later.
-  // Summer = the current (active) season, Winter = a completed past season.
   const [seasons] = useState<Season[]>([
     { id: 1, theme: "Summer", status: "active",   currentRound: 2, roundCount: 3, startsAt: "2026-07-17", endsAt: "2026-07-31" },
     // complete → currentRound past the last round so every frame reads developed.
@@ -68,45 +72,43 @@ function App() {
   ])
 
 
-  //MOCK BTW
-  // Flat list of frames — the only real stored objects. Rolls/rounds are derived
-  // by filtering this list. Some rounds carry more than one frame on purpose.
+  //MOCK BTW REMOVE WHEN BACKEND IS GOOD
+  
+
   const frames: Frame[] = [
-    // ── Summer (season 1). Round 1 has developed (round < currentRound=2);
-    //    round 2 is still hidden for everyone except the current user.
-    { id: 1,  author: "Ethan", timeTaken: "2026-07-17T08:15:30", location: "New York", round: 1, seasonId: 1, status: "submitted" },
-    { id: 2,  author: "Ethan", timeTaken: "2026-07-17T21:02:00", location: "New York", round: 1, seasonId: 1, status: "submitted" },
-    { id: 3,  author: "Ethan", timeTaken: "2026-07-20T06:40:00", location: "Boston",   round: 2, seasonId: 1, status: "submitted" },
-    { id: 4,  author: "Ethan", timeTaken: "2026-07-20T19:12:00", location: "Boston",   round: 2, seasonId: 1, status: "submitted" },
-    { id: 5,  author: "Ava",   timeTaken: "2026-07-18T10:20:00", location: "Toronto",  round: 1, seasonId: 1, status: "submitted" },
-    { id: 6,  author: "Ava",   timeTaken: "2026-07-18T17:50:00", location: "Toronto",  round: 1, seasonId: 1, status: "submitted" },
-    { id: 7,  author: "Ava",   timeTaken: "2026-07-21T09:00:00", location: "Toronto",  round: 2, seasonId: 1, status: "submitted" },
-    { id: 8,  author: "Ava",   timeTaken: "2026-07-21T20:00:00", location: "Toronto",  round: 2, seasonId: 1, status: "submitted" },
-    { id: 9,  author: "David", timeTaken: "2026-07-18T08:40:00", location: "Seattle",  round: 1, seasonId: 1, status: "submitted" },
-    { id: 10, author: "David", timeTaken: "2026-07-21T12:30:00", location: "Seattle",  round: 2, seasonId: 1, status: "submitted" },
-    { id: 11, author: "David", timeTaken: "2026-07-22T07:15:00", location: "Seattle",  round: 2, seasonId: 1, status: "submitted" },
-    { id: 12, author: "Leo",   timeTaken: "2026-07-17T07:55:00", location: "Montreal", round: 1, seasonId: 1, status: "submitted" },
-    { id: 13, author: "Leo",   timeTaken: "2026-07-17T16:30:00", location: "Montreal", round: 1, seasonId: 1, status: "submitted" },
-    { id: 14, author: "Leo",   timeTaken: "2026-07-20T14:00:00", location: "Montreal", round: 2, seasonId: 1, status: "submitted" },
-    { id: 15, author: "Mia",   timeTaken: "2026-07-19T12:00:00", location: "Chicago",  round: 1, seasonId: 1, status: "submitted" },
-    { id: 16, author: "Mia",   timeTaken: "2026-07-19T20:30:00", location: "Chicago",  round: 1, seasonId: 1, status: "submitted" },
-    { id: 17, author: "Mia",   timeTaken: "2026-07-22T11:11:00", location: "Chicago",  round: 2, seasonId: 1, status: "submitted" },
-    { id: 18, author: "Mia",   timeTaken: "2026-07-22T18:45:00", location: "Chicago",  round: 2, seasonId: 1, status: "submitted" },
+    { id: 1,  author: "Ethan", timeTaken: "2026-07-17T08:15:30", location: "New York", round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 2,  author: "Ethan", timeTaken: "2026-07-17T21:02:00", location: "New York", round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 3,  author: "Ethan", timeTaken: "2026-07-20T06:40:00", location: "Boston",   round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 4,  author: "Ethan", timeTaken: "2026-07-20T19:12:00", location: "Boston",   round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 5,  author: "Ava",   timeTaken: "2026-07-18T10:20:00", location: "Toronto",  round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 6,  author: "Ava",   timeTaken: "2026-07-18T17:50:00", location: "Toronto",  round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 7,  author: "Ava",   timeTaken: "2026-07-21T09:00:00", location: "Toronto",  round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 8,  author: "Ava",   timeTaken: "2026-07-21T20:00:00", location: "Toronto",  round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 9,  author: "David", timeTaken: "2026-07-18T08:40:00", location: "Seattle",  round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 10, author: "David", timeTaken: "2026-07-21T12:30:00", location: "Seattle",  round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 11, author: "David", timeTaken: "2026-07-22T07:15:00", location: "Seattle",  round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 12, author: "Leo",   timeTaken: "2026-07-17T07:55:00", location: "Montreal", round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 13, author: "Leo",   timeTaken: "2026-07-17T16:30:00", location: "Montreal", round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 14, author: "Leo",   timeTaken: "2026-07-20T14:00:00", location: "Montreal", round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 15, author: "Mia",   timeTaken: "2026-07-19T12:00:00", location: "Chicago",  round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 16, author: "Mia",   timeTaken: "2026-07-19T20:30:00", location: "Chicago",  round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 17, author: "Mia",   timeTaken: "2026-07-22T11:11:00", location: "Chicago",  round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
+    { id: 18, author: "Mia",   timeTaken: "2026-07-22T18:45:00", location: "Chicago",  round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
 
     // ── Winter (season 2, complete). Every frame is developed.
-    { id: 19, author: "Ethan", timeTaken: "2025-12-05T18:00:00", location: "New York", round: 1, seasonId: 2, status: "submitted" },
-    { id: 20, author: "Ethan", timeTaken: "2025-12-05T19:00:00", location: "New York", round: 1, seasonId: 2, status: "submitted" },
-    { id: 21, author: "Ethan", timeTaken: "2025-12-12T08:00:00", location: "New York", round: 2, seasonId: 2, status: "submitted" },
-    { id: 22, author: "Ava",   timeTaken: "2025-12-06T17:00:00", location: "Toronto",  round: 1, seasonId: 2, status: "submitted" },
-    { id: 23, author: "Ava",   timeTaken: "2025-12-13T09:00:00", location: "Toronto",  round: 2, seasonId: 2, status: "submitted" },
-    { id: 24, author: "Leo",   timeTaken: "2025-12-05T07:55:00", location: "Boston",   round: 1, seasonId: 2, status: "submitted" },
-    { id: 25, author: "Leo",   timeTaken: "2025-12-06T16:42:00", location: "Montreal", round: 1, seasonId: 2, status: "submitted" },
-    { id: 26, author: "Leo",   timeTaken: "2025-12-13T17:00:00", location: "Boston",   round: 2, seasonId: 2, status: "submitted" },
+    { id: 19, author: "Ethan", timeTaken: "2025-12-05T18:00:00", location: "New York", round: 1, seasonId: 2, status: "submitted", timeSource: "manual" },
+    { id: 20, author: "Ethan", timeTaken: "2025-12-05T19:00:00", location: "New York", round: 1, seasonId: 2, status: "submitted", timeSource: "manual" },
+    { id: 21, author: "Ethan", timeTaken: "2025-12-12T08:00:00", location: "New York", round: 2, seasonId: 2, status: "submitted", timeSource: "manual" },
+    { id: 22, author: "Ava",   timeTaken: "2025-12-06T17:00:00", location: "Toronto",  round: 1, seasonId: 2, status: "submitted", timeSource: "manual" },
+    { id: 23, author: "Ava",   timeTaken: "2025-12-13T09:00:00", location: "Toronto",  round: 2, seasonId: 2, status: "submitted", timeSource: "manual" },
+    { id: 24, author: "Leo",   timeTaken: "2025-12-05T07:55:00", location: "Boston",   round: 1, seasonId: 2, status: "submitted", timeSource: "manual" },
+    { id: 25, author: "Leo",   timeTaken: "2025-12-06T16:42:00", location: "Montreal", round: 1, seasonId: 2, status: "submitted", timeSource: "manual" },
+    { id: 26, author: "Leo",   timeTaken: "2025-12-13T17:00:00", location: "Boston",   round: 2, seasonId: 2, status: "submitted", timeSource: "manual" },
   ]
 
   // Awards are their own flat list, linked to frames by frameId. Winter's three
   // render in its award row. Summer's are here too but WON'T show while it's
-  // active — awards are handed out at end of season (see AwardRow gate below).
+  // active — awards are handed out at end of season.
   const awards: Award[] = [
     { id: 1, name: AWARDS.mostPeaceful,    frameId: 24, seasonId: 2 },
     { id: 2, name: AWARDS.madeMeLaugh,     frameId: 22, seasonId: 2 },
@@ -299,6 +301,7 @@ function FrameDetail({ frame, onClose }: { frame: Frame | null, onClose: () => v
 function AddFrameModal({ onClose }: { onClose: () => void }) {
   const [location, setLocation] = useState("")
   const [time, setTime] = useState("")
+  const [timeSource, setTimeSource] = useState<TimeSource>("manual")
   const inputRef = useRef<HTMLInputElement | null>(null)
   // error states for file uploads.
   const [preview, setPreview] = useState<string | null>(null)
@@ -313,21 +316,25 @@ function AddFrameModal({ onClose }: { onClose: () => void }) {
   }
   // ── File reading helper method. Returns Exif data for the selected image
   // file. Used in the AddFrameModal to prefill the time/location fields.
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     const okType = file.type === "image/jpeg" || file.type === "image/heic"
-
     const okSize = file.size <= 20 * 1024 * 1024
     if (!okType || !okSize) {
       setPreview(null)
       setIsHeic(false)
       setFileName(null)
+      setTime("")
+      setTimeSource("manual")
       setFileSize(null)
       setError(!okType ? "JPEG or HEIC only" : "File too large (max 20MB)")
       return
   }
   setError(null)
+
+  setTime("")
+  setTimeSource("manual")
   setFileName(file.name)
   setFileSize((file.size / 1024 / 1024).toFixed(1) + " MB")
   if (file.type === "image/heic") {
@@ -335,10 +342,23 @@ function AddFrameModal({ onClose }: { onClose: () => void }) {
     // real implementation will have a round trip where the heic is sent backend
     // to be converted to a webP, stored, and sent back for preview.
     setIsHeic(true)
+    setPreview(null)
   }
   else {
     setIsHeic(false)
     setPreview(URL.createObjectURL(file))
+  }
+
+  const exif = await exifr.parse(file).catch(() => null)
+  const exifDate = exif?.DateTimeOriginal ?? exif?.CreateDate
+
+  if (exifDate instanceof Date) {
+    setTime(toDatetimeLocalString(exifDate))
+    setTimeSource("exif")
+  }
+  else {
+    setTime("")
+    setTimeSource("manual")
   }
 }
   
@@ -365,7 +385,7 @@ function AddFrameModal({ onClose }: { onClose: () => void }) {
             <input type="text" placeholder="Where was this?" value={location} onChange={(e) => setLocation(e.target.value)} style={fieldInput} />
           </label>
           <label className="detail__row"><span>Time</span>
-            <input type="datetime-local" value={time} onChange={(e) => setTime(e.target.value)} style={{ ...fieldInput, textAlign: "left" }} />
+            <input type="datetime-local" value={time} data-time-source={timeSource} onChange={(e) => { setTime(e.target.value); setTimeSource("manual"); }} style={{ ...fieldInput, textAlign: "left" }} />
           </label>
           <button className="detail__close" onClick={onClose}>Cancel</button>
         </div>

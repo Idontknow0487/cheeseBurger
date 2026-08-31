@@ -6,8 +6,12 @@ export type Frame = {
     round: number;
     seasonId: number;
     status: "draft" | "submitted";
+    timeSource: TimeSource;
     image?: string;
 };
+
+export type TimeSource = "exif" | "manual";
+
 //planned is purly for dev 
 export type Season = {
     id: number;
@@ -21,8 +25,6 @@ export type Season = {
     endsAt: string;
 };
 
-// The fixed set of awards. Values are stable strings; the union type is derived
-// from them so award names stay in sync with this object.
 export const AWARDS = {
     mostPeaceful: "Most peaceful",
     madeMeLaugh: "Made me laugh",
