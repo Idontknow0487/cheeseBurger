@@ -3,10 +3,11 @@ import exifr from 'exifr'
 import heicPlaceholder from './assets/IMG_5065-2.jpg'
 import { useState, useRef } from 'react'
 import { filterFrames } from './filterFrames'
-  import type { Frame, Season, Award, TimeSource } from './types'
+import type { Frame, Season, Award, TimeSource } from './types'
 import { AWARDS } from './types'
 
 type Page = "active" | "map" | "past"
+type FrameSubmitFields = { location: string, timeTaken: string, timeSource: TimeSource, image: string}
 
 // ── Placeholder "photos". Real frames will carry `image` (a createObjectURL
 // preview in v1); until then a developed frame shows a gradient picked
@@ -73,9 +74,7 @@ function App() {
 
 
   //MOCK BTW REMOVE WHEN BACKEND IS GOOD
-  
-
-  const frames: Frame[] = [
+  const [frames, setFrames] = useState<Frame[]>([
     { id: 1,  author: "Ethan", timeTaken: "2026-07-17T08:15:30", location: "New York", round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
     { id: 2,  author: "Ethan", timeTaken: "2026-07-17T21:02:00", location: "New York", round: 1, seasonId: 1, status: "submitted", timeSource: "manual" },
     { id: 3,  author: "Ethan", timeTaken: "2026-07-20T06:40:00", location: "Boston",   round: 2, seasonId: 1, status: "submitted", timeSource: "manual" },
@@ -104,7 +103,7 @@ function App() {
     { id: 24, author: "Leo",   timeTaken: "2025-12-05T07:55:00", location: "Boston",   round: 1, seasonId: 2, status: "submitted", timeSource: "manual" },
     { id: 25, author: "Leo",   timeTaken: "2025-12-06T16:42:00", location: "Montreal", round: 1, seasonId: 2, status: "submitted", timeSource: "manual" },
     { id: 26, author: "Leo",   timeTaken: "2025-12-13T17:00:00", location: "Boston",   round: 2, seasonId: 2, status: "submitted", timeSource: "manual" },
-  ]
+  ])
 
   // Awards are their own flat list, linked to frames by frameId. Winter's three
   // render in its award row. Summer's are here too but WON'T show while it's
@@ -128,7 +127,7 @@ function App() {
       <Nav page={page} setPage={setPage} />
 
       {page === "active" && (activeSeason
-        ? <SeasonView season={activeSeason} frames={frames} awards={awards} currentUser={currentUser} now={now} />
+        ? <SeasonView season={activeSeason} frames={frames} setFrames={setFrames} awards={awards} currentUser={currentUser} now={now} />
         : <p>No active season right now.</p>)}
 
       {page === "map" && <MapStub />}
@@ -136,7 +135,7 @@ function App() {
       {page === "past" && (openPast
         ? <>
             <button className="back" onClick={() => setOpenPastId(null)}>← Past seasons</button>
-            <SeasonView season={openPast} frames={frames} awards={awards} currentUser={currentUser} now={now} />
+            <SeasonView season={openPast} frames={frames} setFrames={setFrames} awards={awards} currentUser={currentUser} now={now} />
           </>
         : <PastGrid seasons={seasons} frames={frames} onOpen={setOpenPastId} />)}
     </div>
@@ -183,14 +182,28 @@ function buildRolls(frames: Frame[], season: Season, currentUser: string): RollV
 
 // ── Header + rolls, shared by the active and opened-past views. The selected
 // frame (for the detail modal) and the add-frame modal both live here.
-function SeasonView({ season, frames, awards, currentUser, now }: {
-  season: Season, frames: Frame[], awards: Award[], currentUser: string, now: Date
+function SeasonView({ season, frames, setFrames, awards, currentUser, now }: {
+  season: Season, frames: Frame[], setFrames: React.Dispatch<React.SetStateAction<Frame[]>>, awards: Award[], currentUser: string, now: Date
 }) {
   const [selected, setSelected] = useState<Frame | null>(null)
   const [adding, setAdding] = useState(false)
   const isActive = season.status === "active"
   const rolls = buildRolls(frames, season, currentUser)
   const seasonAwards = awards.filter(a => a.seasonId === season.id)
+  const handleSubmit = (fields: FrameSubmitFields) => {
+  const newFrame: Frame = {
+    id: Date.now(), //TODO: MOCK, USING DATE.NOW AS FRAME ID, CHANGE LATER
+    author: currentUser,
+    timeTaken: fields.timeTaken,
+    location: fields.location,
+    round: season.currentRound,
+    seasonId: season.id,
+    status: "draft",
+    timeSource: fields.timeSource,
+    image: fields.image
+  }
+  setFrames(prev => [...prev, newFrame])
+}
 
   return (
     <>
@@ -222,7 +235,7 @@ function SeasonView({ season, frames, awards, currentUser, now }: {
 
       {isActive && <button className="fab" aria-label="Add a frame" onClick={() => setAdding(true)}>+</button>}
       <FrameDetail frame={selected} onClose={() => setSelected(null)} />
-      {adding && <AddFrameModal onClose={() => setAdding(false)} />}
+      {adding && <AddFrameModal onSubmit={handleSubmit} onClose={() => setAdding(false)} />}
     </>
   )
 }
@@ -269,10 +282,13 @@ function FrameCell({ frame, season, currentUser, onSelect }: {
   const isMine = frame.author === currentUser
   const isDeveloped = frame.status === "submitted" && frame.round < season.currentRound
   const canSee = isMine || isDeveloped
+  
   if (!canSee) return <div className="frame frame--undev" />
+  const bg = frame.image ? `url(${frame.image})` : gradientFor(frame)
   return (
-    <div className="frame frame--dev" style={{ background: gradientFor(frame) }}
-         onClick={() => onSelect(frame)} role="button" tabIndex={0} />
+    <div className ="frame frame--dev" style={{ background: bg, backgroundSize: "cover", backgroundPosition: "center" }} 
+    onClick={() => onSelect(frame)} role="button" tabIndex={0}
+    />
   )
 }
 
@@ -280,10 +296,11 @@ function FrameCell({ frame, season, currentUser, onSelect }: {
 // selected-frame state lives up in SeasonView; this just receives it + onClose.
 function FrameDetail({ frame, onClose }: { frame: Frame | null, onClose: () => void }) {
   if (!frame) return null
+  const img = frame.image ? `url(${frame.image})` : gradientFor(frame)
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="detail" onClick={e => e.stopPropagation()}>
-        <div className="detail__photo" style={{ background: gradientFor(frame) }} />
+        <div className="detail__photo" style={{ background: img, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="detail__body">
           <div className="detail__author">{frame.author}</div>
           <div className="detail__row"><span>Time</span>{formatFrameTime(frame.timeTaken)}</div>
@@ -297,8 +314,8 @@ function FrameDetail({ frame, onClose }: { frame: Frame | null, onClose: () => v
 }
 
 // ── Add-frame modal. Mock only: "Choose photo" and the fields are non-functional
-// stubs until the backend + real uploads (URL.createObjectURL preview) land.
-function AddFrameModal({ onClose }: { onClose: () => void }) {
+// stubs until the backend
+function AddFrameModal({onSubmit, onClose }: { onSubmit: (fields: FrameSubmitFields) => void, onClose: () => void }) {
   const [location, setLocation] = useState("")
   const [time, setTime] = useState("")
   const [timeSource, setTimeSource] = useState<TimeSource>("manual")
@@ -387,6 +404,19 @@ function AddFrameModal({ onClose }: { onClose: () => void }) {
           <label className="detail__row"><span>Time</span>
             <input type="datetime-local" value={time} data-time-source={timeSource} onChange={(e) => { setTime(e.target.value); setTimeSource("manual"); }} style={{ ...fieldInput, textAlign: "left" }} />
           </label>
+
+          <button className="detail__close" 
+                  disabled={!preview} 
+                  onClick={() => { 
+                    if (preview){
+                      onSubmit({ location, timeTaken: time, timeSource, image:preview})
+                      onClose()
+                    }
+                    }}>
+                      Submit
+          </button>
+          {/*holy cooked*/}
+
           <button className="detail__close" onClick={onClose}>Cancel</button>
         </div>
       </div>
