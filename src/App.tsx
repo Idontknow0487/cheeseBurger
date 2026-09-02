@@ -1,7 +1,7 @@
 import './App.css'
 import exifr from 'exifr'
 import heicPlaceholder from './assets/IMG_5065-2.jpg'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { filterFrames } from './filterFrames'
 import type { Frame, Season, Award, TimeSource } from './types'
 import { AWARDS } from './types'
@@ -320,6 +320,7 @@ function AddFrameModal({onSubmit, onClose }: { onSubmit: (fields: FrameSubmitFie
   const [time, setTime] = useState("")
   const [timeSource, setTimeSource] = useState<TimeSource>("manual")
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const submittedRef = useRef(false)
   // error states for file uploads.
   const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -355,7 +356,7 @@ function AddFrameModal({onSubmit, onClose }: { onSubmit: (fields: FrameSubmitFie
   setFileName(file.name)
   setFileSize((file.size / 1024 / 1024).toFixed(1) + " MB")
   if (file.type === "image/heic") {
-    // Chrome can't render HEIC so we just show a placeholder jpeg for now,
+    // Chrome can't render HEIC (WE LOVE APPLE) so we just show a placeholder jpeg for now,
     // real implementation will have a round trip where the heic is sent backend
     // to be converted to a webP, stored, and sent back for preview.
     setIsHeic(true)
@@ -378,6 +379,15 @@ function AddFrameModal({onSubmit, onClose }: { onSubmit: (fields: FrameSubmitFie
     setTimeSource("manual")
   }
 }
+
+useEffect(() => {
+  return () => {
+    if (preview && !submittedRef.current) URL.revokeObjectURL(preview)
+  }
+}, [preview])
+
+
+// So this part for freeing the blob for image is only here because its a v1 mock with no backend, with backend we can skip this entire thing because the images are no longer blobs and exact http: links.
   
   return (
     <div className="backdrop" onClick={onClose}>
@@ -410,6 +420,7 @@ function AddFrameModal({onSubmit, onClose }: { onSubmit: (fields: FrameSubmitFie
                   onClick={() => { 
                     if (preview){
                       onSubmit({ location, timeTaken: time, timeSource, image:preview})
+                      submittedRef.current = true
                       onClose()
                     }
                     }}>
