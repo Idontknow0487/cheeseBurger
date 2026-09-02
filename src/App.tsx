@@ -303,7 +303,7 @@ function FrameDetail({ frame, onClose }: { frame: Frame | null, onClose: () => v
         <div className="detail__photo" style={{ background: img, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="detail__body">
           <div className="detail__author">{frame.author}</div>
-          <div className="detail__row"><span>Time</span>{formatFrameTime(frame.timeTaken)}</div>
+          <div className="detail__row"><span>Time</span>{frame.timeSource === "exif" ? "=" : "≈"} {formatFrameTime(frame.timeTaken)}</div>
           <div className="detail__row"><span>Location</span>{frame.location}</div>
           <div className="detail__row"><span>Round</span>R{frame.round}</div>
           <button className="detail__close" onClick={onClose}>Close</button>
