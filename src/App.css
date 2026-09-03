@@ -76,7 +76,10 @@
 /* detail modal */
 .backdrop { position:fixed; inset:0; background:rgba(4,5,7,.82); display:flex; align-items:center; justify-content:center; padding:24px; z-index:50; animation:fade .2s ease; }
 @keyframes fade { from{opacity:0;} to{opacity:1;} }
-.detail { display:flex; gap:0; background:var(--film); border-radius:8px; overflow:hidden;max-width: 1000px; width:100%; box-shadow:0 30px 80px rgba(0,0,0,.7); flex-wrap:wrap; }
+/* max-height matches the backdrop's 24px padding, doubled — without it a modal
+   taller than the viewport overflows *both* ways (the backdrop centres it), so
+   the top and bottom are clipped away with nothing to scroll them back. */
+.detail { display:flex; gap:0; background:var(--film); border-radius:8px; overflow:hidden;max-width: 1000px; max-height:calc(100vh - 48px); width:100%; box-shadow:0 30px 80px rgba(0,0,0,.7); flex-wrap:wrap; }
 .detail__photo { flex: 4 1 320px;
   min-width: 0;
   max-height: 70vh;
@@ -87,6 +90,27 @@
 .detail__row span { color:var(--ink-dim); text-transform:uppercase; letter-spacing:.1em; font-size:11px; }
 .detail__close { margin-top:auto; background:transparent; border:1px solid var(--line); color:var(--ink); padding:10px; border-radius:6px; cursor:pointer; font:inherit; }
 .detail__close:hover { border-color:var(--amber); color:var(--amber); }
+
+/* ── add-frame modal. Same shell as the viewer, but a form wants a narrower
+   measure than a photo does, and it's the one that can outgrow the viewport. */
+.detail--form { flex-direction:column; max-width:560px; }
+/* min-height:0 is what actually lets the body shrink below its content and
+   scroll — a flex item's default min-height:auto would refuse to. */
+.detail--form .detail__body { flex:1 1 auto; min-height:0; overflow-y:auto; gap:12px; padding:22px; }
+
+/* width:auto + align-self:center so the box hugs the photo. Stretched (the flex
+   default) it would reserve full width and full height for a portrait shot and
+   just letterbox inside it — small on screen, expensive in layout. */
+.detail__preview { align-self:center; width:auto; height:auto; max-width:100%; max-height:30vh; border-radius:4px; object-fit:contain; }
+.detail__preview--heic { opacity:.85; }
+
+/* the form's own button: .detail__close carries margin-top:auto, which pins
+   Close to the bottom of the viewer and has no business in a stacked form. */
+.detail__btn { background:transparent; border:1px solid var(--line); color:var(--ink); padding:7px 10px; border-radius:6px; cursor:pointer; font:inherit; font-size:13px; }
+.detail__btn:hover:not(:disabled) { border-color:var(--amber); color:var(--amber); }
+.detail__btn:disabled { opacity:.45; cursor:not-allowed; }
+.detail__actions { display:flex; gap:10px; margin-top:4px; }
+.detail__actions .detail__btn { flex:1; }
 
 /* past-seasons grid */
 .pastgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:20px; }

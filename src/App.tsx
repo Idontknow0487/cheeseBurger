@@ -392,23 +392,23 @@ useEffect(() => {
   
   return (
     <div className="backdrop" onClick={onClose}>
-      <div className="detail" onClick={e => e.stopPropagation()}>
-        <div className="detail__body" style={{ flex: "1 1 100%" }}>
+      <div className="detail detail--form" onClick={e => e.stopPropagation()}>
+        <div className="detail__body">
           <div className="detail__author">Add a frame</div>
 
           <label className="detail__row"><span>Photo</span></label>
           <input ref={inputRef} type="file" accept="image/jpeg,image/heic,image/webp" style={{ display: "none" }} onChange={handleFile} />
           {isHeic
-            ? <img src={heicPlaceholder} alt="" style={{ maxWidth: "100%",maxHeight: "440px", borderRadius: 4, opacity: 0.85, objectFit: "contain" }} />
-            : preview && <img src={preview} alt="" style={{ maxWidth: "100%",maxHeight: "440px", borderRadius: 4, objectFit: "contain"}} />}
+            ? <img className="detail__preview detail__preview--heic" src={heicPlaceholder} alt="" />
+            : preview && <img className="detail__preview" src={preview} alt="" />}
           {fileName && (
             <div className="detail__row">
               <span>{isHeic ? "HEIC (placeholder)" : "File"}</span>{fileName} · {fileSize}
             </div>
           )}
           {error && <p style={{ color: "#e0a458" }}>{error}</p>}
-          <button className="detail__close" style={{ marginTop: 0 }} onClick={() => inputRef.current?.click()}>Choose photo</button>
-          
+          <button className="detail__btn" onClick={() => inputRef.current?.click()}>Choose photo</button>
+
           <label className="detail__row"><span>Location</span>
             <input type="text" placeholder="Where was this?" value={location} onChange={(e) => setLocation(e.target.value)} style={fieldInput} />
           </label>
@@ -416,20 +416,20 @@ useEffect(() => {
             <input type="datetime-local" value={time} data-time-source={timeSource} onChange={(e) => { setTime(e.target.value); setTimeSource("manual"); }} style={{ ...fieldInput, textAlign: "left" }} />
           </label>
 
-          <button className="detail__close" 
-                  disabled={!preview} 
-                  onClick={() => { 
-                    if (preview){
-                      onSubmit({ location, timeTaken: time, timeSource, image:preview})
-                      submittedRef.current = true
-                      onClose()
-                    }
-                    }}>
-                      Submit
-          </button>
-          {/*holy cooked*/}
-
-          <button className="detail__close" onClick={onClose}>Cancel</button>
+          <div className="detail__actions">
+            <button className="detail__btn" onClick={onClose}>Cancel</button>
+            <button className="detail__btn"
+                    disabled={!preview}
+                    onClick={() => {
+                      if (preview){
+                        onSubmit({ location, timeTaken: time, timeSource, image:preview})
+                        submittedRef.current = true
+                        onClose()
+                      }
+                      }}>
+                        Submit
+            </button>
+          </div>
         </div>
       </div>
     </div>
