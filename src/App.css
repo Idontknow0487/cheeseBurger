@@ -76,8 +76,11 @@
 /* detail modal */
 .backdrop { position:fixed; inset:0; background:rgba(4,5,7,.82); display:flex; align-items:center; justify-content:center; padding:24px; z-index:50; animation:fade .2s ease; }
 @keyframes fade { from{opacity:0;} to{opacity:1;} }
-.detail { display:flex; gap:0; background:var(--film); border-radius:8px; overflow:hidden; max-width:640px; width:100%; box-shadow:0 30px 80px rgba(0,0,0,.7); flex-wrap:wrap; }
-.detail__photo { flex:1 1 340px; min-height:300px; }
+.detail { display:flex; gap:0; background:var(--film); border-radius:8px; overflow:hidden;max-width: 1000px; width:100%; box-shadow:0 30px 80px rgba(0,0,0,.7); flex-wrap:wrap; }
+.detail__photo { flex: 4 1 320px;
+  min-width: 0;
+  max-height: 70vh;
+  object-fit: contain;}
 .detail__body { flex:1 1 220px; padding:28px; display:flex; flex-direction:column; gap:14px; }
 .detail__author { font-family:'Fraunces',serif; font-size:24px; }
 .detail__row { display:flex; justify-content:space-between; font-size:14px; color:var(--ink); border-bottom:1px solid var(--line); padding-bottom:8px; }

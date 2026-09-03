@@ -194,7 +194,7 @@ function SeasonView({ season, frames, setFrames, awards, currentUser, now }: {
   const newFrame: Frame = {
     id: Date.now(), //TODO: MOCK, USING DATE.NOW AS FRAME ID, CHANGE LATER
     author: currentUser,
-    timeTaken: fields.timeTaken,
+    timeTaken: fields.timeTaken || toDatetimeLocalString(new Date()),
     location: fields.location,
     round: season.currentRound,
     seasonId: season.id,
@@ -202,6 +202,7 @@ function SeasonView({ season, frames, setFrames, awards, currentUser, now }: {
     timeSource: fields.timeSource,
     image: fields.image
   }
+  console.log(newFrame)
   setFrames(prev => [...prev, newFrame])
 }
 
@@ -296,11 +297,11 @@ function FrameCell({ frame, season, currentUser, onSelect }: {
 // selected-frame state lives up in SeasonView; this just receives it + onClose.
 function FrameDetail({ frame, onClose }: { frame: Frame | null, onClose: () => void }) {
   if (!frame) return null
-  const img = frame.image ? `url(${frame.image})` : gradientFor(frame)
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="detail" onClick={e => e.stopPropagation()}>
-        <div className="detail__photo" style={{ background: img, backgroundSize: "cover", backgroundPosition: "center" }} />
+        {/* TODO: this is broken because the mock frames arnt images lol*/}
+        <img className="detail__photo" src={frame.image} alt="" />
         <div className="detail__body">
           <div className="detail__author">{frame.author}</div>
           <div className="detail__row"><span>Time</span>{frame.timeSource === "exif" ? "=" : "≈"} {formatFrameTime(frame.timeTaken)}</div>
@@ -337,7 +338,7 @@ function AddFrameModal({onSubmit, onClose }: { onSubmit: (fields: FrameSubmitFie
    async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const okType = file.type === "image/jpeg" || file.type === "image/heic"
+    const okType = file.type === "image/jpeg" || file.type === "image/heic" || file.type === "image/webp"
     const okSize = file.size <= 20 * 1024 * 1024
     if (!okType || !okSize) {
       setPreview(null)
@@ -396,10 +397,10 @@ useEffect(() => {
           <div className="detail__author">Add a frame</div>
 
           <label className="detail__row"><span>Photo</span></label>
-          <input ref={inputRef} type="file" accept="image/jpeg,image/heic" style={{ display: "none" }} onChange={handleFile} />
+          <input ref={inputRef} type="file" accept="image/jpeg,image/heic,image/webp" style={{ display: "none" }} onChange={handleFile} />
           {isHeic
-            ? <img src={heicPlaceholder} alt="" style={{ maxWidth: "100%", borderRadius: 4, opacity: 0.85 }} />
-            : preview && <img src={preview} alt="" style={{ maxWidth: "100%", borderRadius: 4 }} />}
+            ? <img src={heicPlaceholder} alt="" style={{ maxWidth: "100%",maxHeight: "440px", borderRadius: 4, opacity: 0.85, objectFit: "contain" }} />
+            : preview && <img src={preview} alt="" style={{ maxWidth: "100%",maxHeight: "440px", borderRadius: 4, objectFit: "contain"}} />}
           {fileName && (
             <div className="detail__row">
               <span>{isHeic ? "HEIC (placeholder)" : "File"}</span>{fileName} · {fileSize}
