@@ -301,7 +301,7 @@ function FrameDetail({ frame, onClose }: { frame: Frame | null, onClose: () => v
     <div className="backdrop" onClick={onClose}>
       <div className="detail" onClick={e => e.stopPropagation()}>
         {/* TODO: this is broken because the mock frames arnt images lol*/}
-        <img className="detail__photo" src={frame.image} alt="" />
+        {frame.image ? <img className="detail__photo" src={frame.image} alt="" /> : <div className="detail__photo" style={{background:gradientFor(frame)}}> </div>}
         <div className="detail__body">
           <div className="detail__author">{frame.author}</div>
           <div className="detail__row"><span>Time</span>{frame.timeSource === "exif" ? "=" : "≈"} {formatFrameTime(frame.timeTaken)}</div>
